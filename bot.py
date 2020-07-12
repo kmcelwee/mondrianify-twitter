@@ -35,6 +35,11 @@ class Bot:
         access_token = twitter_secrets.ACCESS_TOKEN
         access_token_secret = twitter_secrets.ACCESS_TOKEN_SECRET
 
+        consumer_key = os.environ.get('CONSUMER_KEY', twitter_secrets.CONSUMER_KEY)
+        consumer_secret = os.environ.get('CONSUMER_SECRET', twitter_secrets.CONSUMER_SECRET)
+        access_token = os.environ.get('ACCESS_TOKEN', twitter_secrets.ACCESS_TOKEN)
+        access_token_secret = os.environ.get('ACCESS_TOKEN_SECRET', twitter_secrets.ACCESS_TOKEN_SECRET)
+
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         auth.set_access_token(access_token, access_token_secret)
         
