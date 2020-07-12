@@ -7,7 +7,6 @@ import tweepy
 from PIL import Image
 
 from mondrianify.MondrianPipeline import MondrianPipeline
-import twitter_secrets
 
 class Bot:
     # rate limits
@@ -30,15 +29,11 @@ class Bot:
         else:
             self.latest_id = None
 
-        consumer_key = twitter_secrets.CONSUMER_KEY
-        consumer_secret = twitter_secrets.CONSUMER_SECRET
-        access_token = twitter_secrets.ACCESS_TOKEN
-        access_token_secret = twitter_secrets.ACCESS_TOKEN_SECRET
+        consumer_key = os.environ['CONSUMER_KEY']
+        consumer_secret = os.environ['CONSUMER_SECRET']
+        access_token = os.environ['ACCESS_TOKEN']
+        access_token_secret = os.environ['ACCESS_TOKEN_SECRET']
 
-        consumer_key = os.environ.get('CONSUMER_KEY', twitter_secrets.CONSUMER_KEY)
-        consumer_secret = os.environ.get('CONSUMER_SECRET', twitter_secrets.CONSUMER_SECRET)
-        access_token = os.environ.get('ACCESS_TOKEN', twitter_secrets.ACCESS_TOKEN)
-        access_token_secret = os.environ.get('ACCESS_TOKEN_SECRET', twitter_secrets.ACCESS_TOKEN_SECRET)
 
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         auth.set_access_token(access_token, access_token_secret)
@@ -195,7 +190,7 @@ class Bot:
                 self.find_latest_tweets()
                 self.handle_errors()
 
-                if len(self.latest_tweets) == 0 and datetime.now().minute % 10 == 0:
+                if len(self.latest_tweets) == 0: #and datetime.now().minute % 10 == 0:
                     self.tweet_random_photo()
                 else:
                     self.respond_to_latest_tweets()
