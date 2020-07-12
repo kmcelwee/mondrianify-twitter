@@ -1,0 +1,3 @@
+[submodule "mondrianify"]
+	path = mondrianify
+	url = https://github.com/kmcelwee/mondrianify
