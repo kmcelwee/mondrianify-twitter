@@ -91,14 +91,19 @@ class Bot:
     def respond(self, tweet):
         if self.is_introduction(tweet):
             self.wait_if_necessary()
-            self.send_tweet(tweet, introduction=True)
-            self.last_reponse_time = time.time()
+            self.send_tweet(tweet, tweet_type='introduction')
         else:
-            self.download_tweet_image(tweet)
-            self.apply_image_transform()
-            self.wait_if_necessary()
-            self.send_tweet(tweet)
-            self.last_reponse_time = time.time()
+            try:
+                self.download_tweet_image(tweet)
+                self.apply_image_transform()
+                self.wait_if_necessary()
+                self.send_tweet(tweet)
+            except Exception as err:
+                self.wait_if_necessary()
+                self.send_tweet(tweet, tweet_type='error')
+                print('Error tweet sent. This was the error: ')
+                print(err)
+        self.last_reponse_time = time.time()
 
 
     def wait_if_necessary(self):
@@ -136,8 +141,9 @@ class Bot:
         mp.apply_image_transform()
 
 
-    def send_tweet(self, tweet, reply=True, introduction=False):
-        if not introduction:
+    def send_tweet(self, tweet, tweet_type="reply"):
+        # tweet_types: ['reply', 'random', 'introduction', 'error']
+        if tweet_type in ['reply', 'random']:
             select_filenames = [
                 '0-resize.jpg',
                 '3-find-structure.jpg',
@@ -151,7 +157,7 @@ class Bot:
             assert len(media_ids) <= 4
 
             # Tweet with multiple images
-            if reply:
+            if tweet_type == 'reply':
                 sent = self.twitter.update_status(
                     status=f"@{tweet['user']['screen_name']}",
                     media_ids=media_ids,
@@ -163,9 +169,18 @@ class Bot:
                     status=f"",
                     media_ids=media_ids,
                 )
-        else:
+        elif tweet_type == 'introduction':
             sent = self.twitter.update_status(
                 status=f"@{tweet['user']['screen_name']} Hello! Reply with an image and I'll paint it for you 🎨😁",
+                in_reply_to_status_id=tweet['id']
+            )
+        else:
+            sent = self.twitter.update_status(
+                status=(f"@{tweet['user']['screen_name']} Hm, looks like I'm" +
+                " having trouble with this one 😕 I work best on images with" + 
+                " clearly-defined objects. Maybe alter the image slightly and" +
+                " try again? I may also be down because of a larger issue," +
+                " but hopefully that's not the case."),
                 in_reply_to_status_id=tweet['id']
             )
 
@@ -174,7 +189,7 @@ class Bot:
 
     def tweet_random_photo(self):
         self.apply_image_transform(random=True)
-        self.send_tweet(None, reply=False)
+        self.send_tweet(None, tweet_type='random')
 
 
     def respond_to_latest_tweets(self):
@@ -190,7 +205,7 @@ class Bot:
                 self.find_latest_tweets()
                 self.handle_errors()
 
-                if len(self.latest_tweets) == 0: #and datetime.now().minute % 10 == 0:
+                if len(self.latest_tweets) == 0 and datetime.now().minute % 10 == 0:
                     self.tweet_random_photo()
                 else:
                     self.respond_to_latest_tweets()
@@ -202,6 +217,8 @@ class Bot:
                 print(err)
                 if 'Twitter' in str(err):
                     time.sleep(900)
+                else:
+                    time.sleep(60)
             
 # -------------------------------------------------------------------- #
     
