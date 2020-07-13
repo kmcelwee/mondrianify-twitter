@@ -16,7 +16,7 @@ class Bot:
     def __init__(self,
         output_dir='output/',
         tmp_image_in='tmp-image-in.jpg',
-        id_file = 'latest_id.txt'
+        id_file='latest_id.txt'
     ):
         self.last_reponse_time = None
         self.output_dir = output_dir
@@ -158,6 +158,9 @@ class Bot:
 
     def send_tweet(self, tweet, tweet_type="reply"):
         # tweet_types: ['reply', 'random', 'introduction', 'error']
+        if tweet_type != 'random':
+            self.store_latest_id(tweet) 
+
         if tweet_type in ['reply', 'random']:
             select_filenames = [
                 '0-resize.jpg',
@@ -211,7 +214,6 @@ class Bot:
         self.last_reponse_time = None
         for tweet in reversed(self.latest_tweets):
             self.respond(tweet)
-            self.store_latest_id(tweet) 
 
 
     def start(self):
