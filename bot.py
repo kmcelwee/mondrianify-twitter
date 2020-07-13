@@ -25,7 +25,8 @@ class Bot:
 
         if os.path.exists(id_file):
             with open(id_file) as f:
-                self.latest_id = int(f.read())
+                item = f.read()
+                self.latest_id = None if item == '' else int(item)
         else:
             self.latest_id = None
 
@@ -45,19 +46,33 @@ class Bot:
 
     def find_latest_tweets(self):
         """Get all tweets that mention the bot since last checking"""
-        latest_tweets = [
-            status for status in tweepy.Cursor(
-                self.twitter.search,
+
+        # if empty latest_id file, don't send any, and just store the latest one
+        if self.latest_id is None:
+            latest_tweet = self.twitter.search(
                 q="to:PietMondrianAI",
                 result_type="recent",
-                count=100,
-                since_id=self.latest_id
-            ).items(Bot.MAX_TWEETS_SEARCH)
-        ]
+                count=1
+            )[0]
 
-        self.latest_tweets_raw = [t._json for t in latest_tweets]
+            self.store_latest_id(latest_tweet._json)
 
-        print(f'There are {len(latest_tweets)} tweets in the inbox.')
+            self.latest_tweets_raw = []
+
+        else:
+            latest_tweets = [
+                status for status in tweepy.Cursor(
+                    self.twitter.search,
+                    q="to:PietMondrianAI",
+                    result_type="recent",
+                    count=100,
+                    since_id=self.latest_id
+                ).items(Bot.MAX_TWEETS_SEARCH)
+            ]
+
+            self.latest_tweets_raw = [t._json for t in latest_tweets]
+
+            print(f'There are {len(latest_tweets)} tweets in the inbox.')
 
     
     def store_latest_id(self, tweet):
