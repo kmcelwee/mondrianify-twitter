@@ -59,11 +59,13 @@ class Bot:
 
             self.latest_tweets_raw = []
 
+            print('Collected latest tweet. Will not respond.')
+
         else:
             latest_tweets = [
                 status for status in tweepy.Cursor(
                     self.twitter.search,
-                    q="to:PietMondrianAI",
+                    q="@PietMondrianAI",
                     result_type="recent",
                     count=100,
                     since_id=self.latest_id
