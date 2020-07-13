@@ -50,7 +50,7 @@ class Bot:
         # if empty latest_id file, don't send any, and just store the latest one
         if self.latest_id is None:
             latest_tweet = self.twitter.search(
-                q="to:PietMondrianAI",
+                q="@PietMondrianAI",
                 result_type="recent",
                 count=1
             )[0]
