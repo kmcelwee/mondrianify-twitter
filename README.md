@@ -2,11 +2,7 @@
 
 A Twitter bot wrapper for the [mondrianify repository](https://github.com/kmcelwee/mondrianify/), a pipeline for turning images into paintings by Piet Mondrian. The attached bot ([@PietMondrianAI](https://twitter.com/PietMondrianAI)) is deployed to [Heroku](https://dashboard.heroku.com/).
 
-
-
-<div style="text-align:center">
-  <img width="300px" src="example-conversation.png" />
-</div>
+![](example-conversation.png)
 
 ### bot.py
 A bot class to handle all requests and process the different kinds of tweets we'd like to send:
