@@ -2,11 +2,13 @@
 
 A Twitter bot wrapper for the [mondrianify repository](https://github.com/kmcelwee/mondrianify/), a pipeline for turning images into paintings by Piet Mondrian. The attached bot ([@PietMondrianAI](https://twitter.com/PietMondrianAI)) is deployed to [Heroku](https://dashboard.heroku.com/).
 
+~ ~ ~ ADD TWITTER INTERACTION SCREENSHOT ~ ~ ~
+
 ### bot.py
 A bot class to handle all requests and process the different kinds of tweets we'd like to send:
 - `introduction`: If a user mentions the bot, it will introduce itself and ask for an image.
-	- Note: This is queried using `"@PietMondrianAI"`, but one may want to change the query to `to:PietMondrianAI` on their own bot. The latter would only select tweets that replied to a bot tweet or mentioned the bot at the very beginning of their tweet.
-- `random`: The bot grabs a random image of a random dimension using Unsplash (LINK) and runs a transformation on it. It tweets the results.
+	- Note: This is queried using `q="@PietMondrianAI"`, but one may want to change the query to `q="to:PietMondrianAI"` on their own bot. The latter would only select tweets that replied to a bot tweet or mentioned the bot at the very beginning of their tweet.
+- `random`: The bot grabs a random image of a random dimension using [Unsplash](https://unsplash.com/developers) and runs the transformation on the image. It tweets the results.
 - `reply_transform`: If there is an image in the tweet that mentions this bot, take the first image, apply the Mondrian tranform, and tweet the results.
 - `error`: If given a blank or undistinct image the clustering algorithms will fail. The bot will respond with a brief explanation of what might have gone wrong.
 
@@ -17,7 +19,7 @@ External storage of the last tweet the bot processed. On restart, we can configu
 The file that runs our Heroku app. The contents are simply `python bot.py`
 
 ### Aptfile
-A file that helps handle some of the unique dependencies we have with running `opencv-python` on Heroku. See 
+A file that helps handle some of the unique dependencies we have with running `opencv-python` on Heroku. 
 
 ### mondrianify
 The submodule that links to the [mondrianify repository](https://github.com/kmcelwee/mondrianify/), which contains all the code necessary to process an image.
@@ -27,7 +29,7 @@ Given [Twitter's rate limits](https://developer.twitter.com/en/docs/basics/rate-
 
 ## Local and remote setup
 
-This repo is deployed to Heroku, launching the simple Procfile `python bot.py` and installing the packages in `requirements.txt`. However to run a similar bot locally or replicate this repo there are some other configurations you'll have to keep in mind.
+This repo is deployed to Heroku, which simply installs the packages in `requirements.txt` and launches the bot with `python bot.py`. However to run a similar bot locally or replicate this repo there are some other configurations you'll have to keep in mind.
 
 ### Configuring secrets
 Twitter requires that you register as a developer in order to interact with their platform and/or request data. ([Apply to be a Twitter developer](https://developer.twitter.com/en/apply-for-access)).
