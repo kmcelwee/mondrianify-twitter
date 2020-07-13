@@ -1,10 +1,10 @@
 # mondrian-twitter
 
-A Twitter bot wrapper for the mondrianify repository #(LINK), a pipeline
+A Twitter bot wrapper for the [mondrianify repository](https://github.com/kmcelwee/mondrianify/), a pipeline for turning images into paintings by Piet Mondrian. The attached bot ([@PietMondrianAI](https://twitter.com/PietMondrianAI)) is deployed to [Heroku](https://dashboard.heroku.com/) and 
 
-This bot ([@PietMondrianAI](https://twitter.com/PietMondrianAI)) is configured to 
 
-## Structure
+<blockquote class="twitter-tweet"><p lang="und" dir="ltr"><a href="https://t.co/rMcQl4fZ4U">pic.twitter.com/rMcQl4fZ4U</a></p>&mdash; Piet Mondrian (@PietMondrianAI) <a href="https://twitter.com/PietMondrianAI/status/1282600963627524096?ref_src=twsrc%5Etfw">July 13, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+
 
 ### bot.py
 A bot class to handle all requests and process the different kinds of tweets we'd like to send:
@@ -28,8 +28,6 @@ A file that helps handle some of the unique dependencies we have with running `o
 ## mondrianify
 The submodule that links to the ### mondrianify repo, which contains all the code necessary to process the image.
 
----
-
 ## Twitter API and rate limits
 https://developer.twitter.com/en/docs/basics/rate-limits
 
@@ -39,7 +37,7 @@ Given Twitter's rate limits, the bot can only tweet once or twice a minute, with
 
 ## Local and remote setup
 
-This repo is deployed to [Heroku](https://dashboard.heroku.com/), launching the simple Procfile `python bot.py` and installing the packages in `requirements.txt`. However to run a similar bot locally or replicate this repo there are some other configurations you'll have to keep in mind.
+This repo is deployed to Heroku, launching the simple Procfile `python bot.py` and installing the packages in `requirements.txt`. However to run a similar bot locally or replicate this repo there are some other configurations you'll have to keep in mind.
 
 ### Configuring secrets
 Twitter requires that you register as a developer in order to interact with their platform and/or request data. ([Apply to be a Twitter developer](https://developer.twitter.com/en/apply-for-access)).
