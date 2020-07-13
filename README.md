@@ -5,29 +5,25 @@ A Twitter bot wrapper for the [mondrianify repository](https://github.com/kmcelw
 ### bot.py
 A bot class to handle all requests and process the different kinds of tweets we'd like to send:
 - `introduction`: If a user mentions the bot, it will introduce itself and ask for an image.
-	- Note: This is queried using "@PietMondrianAI", but if one wanted to simply 
+	- Note: This is queried using `"@PietMondrianAI"`, but one may want to change the query to `to:PietMondrianAI` on their own bot. The latter would only select tweets that replied to a bot tweet or mentioned the bot at the very beginning of their tweet.
 - `random`: The bot grabs a random image of a random dimension using Unsplash (LINK) and runs a transformation on it. It tweets the results.
 - `reply_transform`: If there is an image in the tweet that mentions this bot, take the first image, apply the Mondrian tranform, and tweet the results.
 - `error`: If given a blank or undistinct image the clustering algorithms will fail. The bot will respond with a brief explanation of what might have gone wrong.
 
 ### latest_id.txt
-External storage of the last tweet the bot processed. On restart, we can configure what tweet we'd like the bot to continue from.
+External storage of the last tweet the bot processed. On restart, we can configure what tweet we'd like the bot to continue from. This is referenced in the search "since_id" keyword argument in the search API. Twitter will fetch all tweets that fit our query and occur after (but not including) the given tweet id.
 
-This is referenced in the search "since_id" keyword argument in the search API. Twitter will fetch all tweets that fit our query and occur after (but not including) the given tweet id.
-
-## Procfile
+### Procfile
 The file that runs our Heroku app. The contents are simply `python bot.py`
 
-## Aptfile
+### Aptfile
 A file that helps handle some of the unique dependencies we have with running `opencv-python` on Heroku. See 
 
-## mondrianify
+### mondrianify
 The submodule that links to the [mondrianify repository](https://github.com/kmcelwee/mondrianify/), which contains all the code necessary to process an image.
 
 ## Twitter API and rate limits
-https://developer.twitter.com/en/docs/basics/rate-limits
-
-Given Twitter's rate limits, the bot can only tweet once or twice a minute, with a backlog of about 1000 tweets. More specifically, there are only two unique Twitter API calls used: one to listen for new mentions (via search) and one to update status. In other words, it can process one request per 36 seconds, and the max queue is 1000 tweets.
+Given [Twitter's rate limits](https://developer.twitter.com/en/docs/basics/rate-limits), the bot can only tweet once or twice a minute, with a backlog of about 1000 tweets. More specifically, there are only two unique Twitter API calls used: one to listen for new mentions (via search) and one to update status. In other words, it can process one request per 36 seconds, and the max queue is 1000 tweets.
 
 ## Local and remote setup
 
