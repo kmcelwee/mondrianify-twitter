@@ -220,7 +220,7 @@ class Bot:
                 self.find_latest_tweets()
                 self.handle_errors()
 
-                if len(self.latest_tweets) == 0 and datetime.now().minute % 10 == 0:
+                if len(self.latest_tweets) == 0 and datetime.now().minute == 0:
                     self.tweet_random_photo()
                 else:
                     self.respond_to_latest_tweets()
