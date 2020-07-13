@@ -8,8 +8,9 @@ from PIL import Image
 
 from mondrianify.MondrianPipeline import MondrianPipeline
 
+
 class Bot:
-    # rate limits
+    # Twitter rate limits
     MAX_TWEETS_SEARCH = 1000
     SECONDS_PER_TWEET = 36
 
@@ -18,11 +19,11 @@ class Bot:
         tmp_image_in='tmp-image-in.jpg',
         id_file='latest_id.txt'
     ):
-        self.last_reponse_time = None
         self.output_dir = output_dir
         self.tmp_image_in = tmp_image_in
         self.id_file = id_file
 
+        # find where the bot left off on startup
         if os.path.exists(id_file):
             with open(id_file) as f:
                 item = f.read()
@@ -30,24 +31,24 @@ class Bot:
         else:
             self.latest_id = None
 
+        # configure twitter API
         consumer_key = os.environ['CONSUMER_KEY']
         consumer_secret = os.environ['CONSUMER_SECRET']
         access_token = os.environ['ACCESS_TOKEN']
         access_token_secret = os.environ['ACCESS_TOKEN_SECRET']
-
-
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         auth.set_access_token(access_token, access_token_secret)
-        
         self.twitter = tweepy.API(auth)
 
+        # vars to be set later
+        self.last_reponse_time = None
         self.latest_tweets_raw = None
         self.latest_tweets = None
 
     def find_latest_tweets(self):
-        """Get all tweets that mention the bot since last checking"""
+        """Get all tweets that mention the bot"""
 
-        # if empty latest_id file, don't send any, and just store the latest one
+        # If no latest_id, don't send any tweets, and just store the latest one
         if self.latest_id is None:
             latest_tweet = self.twitter.search(
                 q="@PietMondrianAI",
@@ -55,7 +56,7 @@ class Bot:
                 count=1
             )[0]
 
-            self.store_latest_id(latest_tweet._json)
+            self.store_id(latest_tweet._json)
 
             self.latest_tweets_raw = []
 
@@ -78,34 +79,41 @@ class Bot:
             print(f'There are {len(latest_tweets)} tweets in the inbox.')
 
     
-    def store_latest_id(self, tweet):
-        """given the latest tweets, store the most recent"""
+    def store_id(self, tweet):
+        """Store the id of the given tweet into the id file"""
         with open(self.id_file, 'w') as f:
             f.write(str(tweet['id']))
             self.latest_id = tweet['id']
 
 
-    def handle_errors(self):
+    def filter_tweets(self):
+        """Of the tweets that mention the bot, which should it respond to?"""
         introduction_tweets = [x for x in self.latest_tweets_raw if self.requires_introduction(x)]
-        # remove tweets with only text
-        filtered_tweets = [x for x in self.latest_tweets_raw if 'media' in x['entities']]
-        # ensure proper media formats
-        filtered_tweets = [
-            t for t in filtered_tweets 
+        
+        # Remove tweets with only text
+        media_tweets = [x for x in self.latest_tweets_raw if 'media' in x['entities']]
+        # Ensure proper media formats
+        media_tweets = [
+            t for t in media_tweets 
             if any([
                 t['entities']['media'][0]['media_url'].endswith(file_format) for file_format in ['.png', '.jpg', '.jpeg']
             ])
         ]
-        self.latest_tweets = filtered_tweets + introduction_tweets
+        
+        # Combine the categories
+        # NOTE: If expanded in the future, make sure it's a unique set.
+        self.latest_tweets = media_tweets + introduction_tweets
 
-        print(f'There are {len(filtered_tweets)} tweets to analyze')
+        print(f'There are {len(self.latest_tweets)} tweets to respond to.')
 
 
     def requires_introduction(self, tweet):
+        """Define what tweets should receive an introduction"""
         return ('media' not in tweet['entities']) and (tweet['in_reply_to_status_id'] is None)
 
 
-    def prepare_and_send_tweet(self, tweet):
+    def prepare_and_send_response_tweet(self, tweet):
+        """Categorize the different responses the bot makes and prepare the tweet"""
         if self.requires_introduction(tweet):
             self.send_tweet(tweet, tweet_type='introduction')
         else:
@@ -117,28 +125,29 @@ class Bot:
                 self.send_tweet(tweet, tweet_type='error')
                 print('Error tweet sent. This was the error: ')
                 print(err)
-        self.last_reponse_time = time.time()
-
+        
 
     def wait_if_necessary(self):
+        """Use twitter's rate limits to best pace tweets"""
         if self.last_reponse_time is not None:
             time_since_last_tweet = time.time() - self.last_reponse_time
             if time_since_last_tweet < Bot.SECONDS_PER_TWEET:
                 wait_time = Bot.SECONDS_PER_TWEET - time_since_last_tweet
                 print(f'Waiting for {wait_time} seconds...')
                 time.sleep(wait_time)
+        self.last_reponse_time = time.time()
 
 
     def download_tweet_image(self, tweet):
-        # grab only the first image
-        m = tweet['entities']['media'][0]
+        """Download the first image in the given tweet"""
+        media_dict = tweet['entities']['media'][0]
 
         # wget has some weird overwrite permissions
         #   for now just remove the file if it exists
         if os.path.exists(self.tmp_image_in):
             os.remove(self.tmp_image_in)
 
-        url = m['media_url']
+        url = media_dict['media_url']
 
         wget.download(url, self.tmp_image_in)
         print() # for cleaner shell logs
@@ -151,43 +160,38 @@ class Bot:
 
 
     def apply_image_transform(self, random=False):
+        """Implement the Mondrian pipeline to transform image"""
         mp = MondrianPipeline(self.tmp_image_in, output_dir=self.output_dir, random=random)
         mp.apply_image_transform()
 
 
-    def send_tweet(self, tweet, tweet_type="reply"):
-        # tweet_types: ['reply', 'random', 'introduction', 'error']
+    def send_tweet(self, tweet, tweet_type="reply_transform"):
+        """Given the message category, configure media and text and send tweet.
+        
+        Types of tweets
+            random: tweet a random photo from unsplash to own timeline.
+            reply_transform: reply with the user's image having gone through the pipeline
+            introduction: reply to user who mentions the bot asking for a photo.
+            error: reply to user if there was an issue processing their photo.
+        """
+
         self.wait_if_necessary()
 
         if tweet_type != 'random':
-            self.store_latest_id(tweet) 
+            self.store_id(tweet)
 
-        if tweet_type in ['reply', 'random']:
-            select_filenames = [
-                '0-resize.jpg',
-                '3-find-structure.jpg',
-                '4-create-painting.jpg',
-                '5-create-overlay.jpg'
-            ]
-
+        if tweet_type in ['reply_transform', 'random']:
+            # Prepare the files to be used in tweet and upload them.
+            select_filenames = [ '0-resize.jpg', '3-find-structure.jpg', 
+                '4-create-painting.jpg', '5-create-overlay.jpg']
             filenames = sorted([self.output_dir+x for x in select_filenames])
+            media_ids = [self.twitter.media_upload(f).media_id for f in filenames]
 
-            media_ids = [self.twitter.media_upload(filename).media_id for filename in filenames]
-            assert len(media_ids) <= 4
-
-            # Tweet with multiple images
-            if tweet_type == 'reply':
-                sent = self.twitter.update_status(
-                    status=f"@{tweet['user']['screen_name']}",
-                    media_ids=media_ids,
-                    in_reply_to_status_id=tweet['id']
-                )
-
-            else:
-                sent = self.twitter.update_status(
-                    status=f"",
-                    media_ids=media_ids,
-                )
+            sent = self.twitter.update_status(
+                status=(f"@{tweet['user']['screen_name']}" if tweet_type == 'reply_transform' else ""),
+                media_ids=media_ids,
+                in_reply_to_status_id=(tweet['id'] if tweet_type == 'reply_transform' else None)
+            )
         
         elif tweet_type == 'introduction':
             sent = self.twitter.update_status(
@@ -195,7 +199,7 @@ class Bot:
                 in_reply_to_status_id=tweet['id']
             )
 
-        else:
+        elif tweet_type == 'error':
             sent = self.twitter.update_status(
                 status=(f"@{tweet['user']['screen_name']} Hm, looks like I'm" +
                 " having trouble with this one 😕 I work best on images with" + 
@@ -205,35 +209,47 @@ class Bot:
                 in_reply_to_status_id=tweet['id']
             )
 
+        else:
+            assert False, 'Improper tweet_type provided'
+
         print(f'Sent tweet! ID: {sent.id}')
 
 
     def tweet_random_photo(self):
+        """Post random photo to the bot's timeline"""
         self.apply_image_transform(random=True)
         self.send_tweet(None, tweet_type='random')
 
 
     def respond_to_latest_tweets(self):
+        """Grab the latest_tweets var and respond to them in reverse order"""
         for tweet in reversed(self.latest_tweets):
-            self.prepare_and_send_tweet(tweet)
+            self.prepare_and_send_response_tweet(tweet)
 
 
     def start(self):
+        """Run entire workflow"""
         while True:
             try:
+                # Get all the tweets the bot needs to respond to
                 self.find_latest_tweets()
-                self.handle_errors()
+                self.filter_tweets()
 
-                if len(self.latest_tweets) == 0 and datetime.now().hour == 3:
+                # If bored, tweet a random photo, otherwise respond to those tweets
+                if len(self.latest_tweets) == 0: #and datetime.now().hour == 3:
                     self.tweet_random_photo()
                 else:
                     self.respond_to_latest_tweets()
 
-                if len(self.latest_tweets) == 0:
+                # Wait before searching again.
+                if len(self.latest_tweets) < 2:
                     time.sleep(60)
+            
             except Exception as err:
                 print('Something went wrong: ')
                 print(err)
+                # If Twitter is in the error, it's likely a rate limiting problem,
+                #  so wait 15 minutes, otherwise wait a minute.
                 if 'Twitter' in str(err):
                     time.sleep(900)
                 else:
