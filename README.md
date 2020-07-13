@@ -7,13 +7,12 @@ A Twitter bot wrapper for the [mondrianify repository](https://github.com/kmcelw
 ### bot.py
 A bot class to handle all requests and process the different kinds of tweets we'd like to send:
 - `introduction`: If a user mentions the bot, it will introduce itself and ask for an image.
-	- Note: This is queried using `q="@PietMondrianAI"`, but one may want to change the query to `q="to:PietMondrianAI"` on their own bot. The latter would only select tweets that replied to a bot tweet or mentioned the bot at the very beginning of their tweet.
 - `random`: The bot grabs a random image of a random dimension using [Unsplash](https://unsplash.com/developers) and runs the transformation on the image. It tweets the results.
-- `reply_transform`: If there is an image in the tweet that mentions this bot, take the first image, apply the Mondrian tranform, and tweet the results.
+- `reply_transform`: If there is an image in a tweet that mentions this bot, take the first image, apply the Mondrian tranform, and tweet the results.
 - `error`: If given a blank or undistinct image the clustering algorithms will fail. The bot will respond with a brief explanation of what might have gone wrong.
 
 ### latest_id.txt
-External storage of the last tweet the bot processed. On restart, we can configure what tweet we'd like the bot to continue from. This is referenced in the search "since_id" keyword argument in the search API. Twitter will fetch all tweets that fit our query and occur after (but not including) the given tweet id.
+The ID of the last tweet the bot processed. On restart, we can configure what tweet we'd like the bot to continue from. This is referenced in the search "since_id" keyword argument in the search API. Twitter will fetch all tweets that fit our query and occur after (but not including) the given tweet id.
 
 ### Procfile
 The file that runs our Heroku app. The contents are simply `python bot.py`
