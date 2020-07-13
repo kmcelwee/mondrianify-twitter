@@ -68,7 +68,8 @@ class Bot:
                     q="@PietMondrianAI",
                     result_type="recent",
                     count=100,
-                    since_id=self.latest_id
+                    since_id=self.latest_id,
+                    tweet_mode='extended'
                 ).items(Bot.MAX_TWEETS_SEARCH)
             ]
 
@@ -85,7 +86,7 @@ class Bot:
 
 
     def handle_errors(self):
-        introduction_tweets = [x for x in self.latest_tweets_raw if self.is_introduction(x)]
+        introduction_tweets = [x for x in self.latest_tweets_raw if self.requires_introduction(x)]
         # remove tweets with only text
         filtered_tweets = [x for x in self.latest_tweets_raw if 'media' in x['entities']]
         # ensure proper media formats
@@ -99,24 +100,20 @@ class Bot:
 
         print(f'There are {len(filtered_tweets)} tweets to analyze')
 
-    # -------------------------RESPONSE--------------------------- #
 
-    def is_introduction(self, tweet):
+    def requires_introduction(self, tweet):
         return ('media' not in tweet['entities']) and (tweet['in_reply_to_status_id'] is None)
 
 
-    def respond(self, tweet):
-        if self.is_introduction(tweet):
-            self.wait_if_necessary()
+    def prepare_and_send_tweet(self, tweet):
+        if self.requires_introduction(tweet):
             self.send_tweet(tweet, tweet_type='introduction')
         else:
             try:
                 self.download_tweet_image(tweet)
                 self.apply_image_transform()
-                self.wait_if_necessary()
                 self.send_tweet(tweet)
             except Exception as err:
-                self.wait_if_necessary()
                 self.send_tweet(tweet, tweet_type='error')
                 print('Error tweet sent. This was the error: ')
                 print(err)
@@ -160,6 +157,8 @@ class Bot:
 
     def send_tweet(self, tweet, tweet_type="reply"):
         # tweet_types: ['reply', 'random', 'introduction', 'error']
+        self.wait_if_necessary()
+
         if tweet_type != 'random':
             self.store_latest_id(tweet) 
 
@@ -189,11 +188,13 @@ class Bot:
                     status=f"",
                     media_ids=media_ids,
                 )
+        
         elif tweet_type == 'introduction':
             sent = self.twitter.update_status(
                 status=f"@{tweet['user']['screen_name']} Hello! Reply with an image and I'll paint it for you 🎨😁",
                 in_reply_to_status_id=tweet['id']
             )
+
         else:
             sent = self.twitter.update_status(
                 status=(f"@{tweet['user']['screen_name']} Hm, looks like I'm" +
@@ -213,9 +214,8 @@ class Bot:
 
 
     def respond_to_latest_tweets(self):
-        self.last_reponse_time = None
         for tweet in reversed(self.latest_tweets):
-            self.respond(tweet)
+            self.prepare_and_send_tweet(tweet)
 
 
     def start(self):
