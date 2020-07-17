@@ -236,7 +236,7 @@ class Bot:
                 self.filter_tweets()
 
                 # If bored, tweet a random photo, otherwise respond to those tweets
-                if len(self.latest_tweets) == 0: #and datetime.now().hour == 3:
+                if len(self.latest_tweets) == 0 and datetime.now().hour == 1:
                     self.tweet_random_photo()
                 else:
                     self.respond_to_latest_tweets()
