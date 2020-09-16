@@ -1,4 +1,4 @@
-# mondrian-twitter
+# mondrianify-twitter
 
 A Twitter bot wrapper for the [mondrianify repository](https://github.com/kmcelwee/mondrianify/), a pipeline for turning images into paintings by Piet Mondrian. The attached bot ([@PietMondrianAI](https://twitter.com/PietMondrianAI)) is deployed to [Heroku](https://dashboard.heroku.com/).
 
