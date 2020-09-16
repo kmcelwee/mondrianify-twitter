@@ -230,28 +230,27 @@ class Bot:
     def start(self):
         """Run entire workflow"""
         while True:
-            # try:
-            # Get all the tweets the bot needs to respond to
-            self.find_latest_tweets()
-            self.filter_tweets()
-            # If bored, tweet a random photo, otherwise respond to those tweets
-            if len(self.latest_tweets) == 0 and datetime.now().hour == 13 and datetime.now().minute == 0:
-                self.tweet_random_photo()
-            else:
-                self.respond_to_latest_tweets()
-            # Wait before searching again.
-            if len(self.latest_tweets) < 2:
-                time.sleep(60)
-
-            # except Exception as err:
-            #     print('Something went wrong: ')
-            #     print(err)
-            #     # If Twitter is in the error, it's likely a rate limiting problem,
-            #     #  so wait 15 minutes, otherwise wait a minute.
-            #     if 'Twitter' in str(err):
-            #         time.sleep(900)
-            #     else:
-            #         time.sleep(60)
+            try:
+                # Get all the tweets the bot needs to respond to
+                self.find_latest_tweets()
+                self.filter_tweets()
+                # If bored, tweet a random photo, otherwise respond to those tweets
+                if len(self.latest_tweets) == 0 and datetime.now().hour == 13 and datetime.now().minute == 0:
+                    self.tweet_random_photo()
+                else:
+                    self.respond_to_latest_tweets()
+                # Wait before searching again.
+                if len(self.latest_tweets) < 2:
+                    time.sleep(60)
+            except Exception as err:
+                print('Something went wrong: ')
+                print(err)
+                # If Twitter is in the error, it's likely a rate limiting problem,
+                #  so wait 15 minutes, otherwise wait a minute.
+                if 'Twitter' in str(err):
+                    time.sleep(900)
+                else:
+                    time.sleep(60)
             
 # -------------------------------------------------------------------- #
     
